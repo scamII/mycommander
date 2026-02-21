@@ -1,0 +1,141 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build Linux binaries
+        run: npm run dist:linux
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-builds
+          path: release/*.{AppImage,deb}
+          if-no-files-found: error
+
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build Windows binaries
+        run: npm run dist:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Zip portable version
+        shell: pwsh
+        run: |
+          Compress-Archive -Path release\win-unpacked\* -DestinationPath release\MyCommander-${{ github.ref_name }}-win-portable.zip
+      
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-builds
+          path: release/*.zip
+          if-no-files-found: error
+
+  create-release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-builds
+          path: release/
+      
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-builds
+          path: release/
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: MyCommander ${{ github.ref_name }}
+          body: |
+            ## 🚀 MyCommander ${{ github.ref_name }}
+            
+            ### Файловый менеджер в стиле TotalCommander
+            
+            ### 📦 Установщики
+            
+            #### Linux
+            - `MyCommander-*.AppImage` - портативная версия (универсальная)
+            - `mycommander_*.deb` - для Debian/Ubuntu
+            
+            #### Windows
+            - `MyCommander-*-win-portable.zip` - портативная версия
+            
+            ### ⚙️ Установка
+            
+            **Linux AppImage:**
+            ```bash
+            chmod +x MyCommander-*.AppImage
+            ./MyCommander-*.AppImage
+            ```
+            
+            **Linux DEB:**
+            ```bash
+            sudo dpkg -i mycommander_*.deb
+            ```
+            
+            **Windows:**
+            1. Распакуйте архив
+            2. Запустите MyCommander.exe
+            
+            ### 🎯 Горячие клавиши
+            - `F3` - Просмотр
+            - `F4` - Правка
+            - `F5` - Копировать
+            - `F6` - Переместить
+            - `F7` - Новая папка
+            - `F8` - Удалить
+            - `F9` - Меню
+            - `F10` - Выход
+            - `Tab` - Переключение панелей
+            - `Backspace` - Вверх
+          draft: false
+          prerelease: false
+          files: release/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
