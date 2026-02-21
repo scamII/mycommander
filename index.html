@@ -11,11 +11,21 @@
   <div style="display: flex; flex-direction: column; height: 100vh;">
     <!-- Верхняя панель с переключателем темы -->
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background-color: var(--orchis-header); border-bottom: 1px solid var(--orchis-border);">
-      <div style="display: flex; gap: 8px; align-items: center;">
-        <button id="btn-ssh" class="btn-orchis btn-small" title="SSH/SFTP">🔗 SSH</button>
-        <button id="btn-toggle-hidden" class="btn-orchis btn-small" title="Показать/Скрыть файлы">👁 Показать/Скрыть</button>
+      <div style="display: flex; gap: 6px; align-items: center;">
+        <button id="btn-ssh" class="btn-orchis btn-small" title="SSH/SFTP">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><path d="M12 8v8"></path><path d="M8 12l4 4 4-4"></path></svg>
+          SSH
+        </button>
+        <button id="btn-ssh-terminal" class="btn-orchis btn-small" title="SSH Терминал">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line><rect x="2" y="3" width="20" height="18" rx="2" ry="2"></rect></svg>
+          Терминал
+        </button>
+        <button id="btn-toggle-hidden" class="btn-orchis btn-small" title="Показать/Скрыть файлы">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          Скрытые
+        </button>
       </div>
-      <button id="btn-theme" style="padding: 6px 12px; background-color: #666; color: white; border-radius: 6px; font-size: 12px; border: none; cursor: pointer;" title="Переключить тему">
+      <button id="btn-theme" class="btn-orchis btn-small" title="Переключить тему">
         <span id="theme-icon">🌙</span>
       </button>
     </div>
@@ -65,14 +75,38 @@
 
     <!-- Нижняя панель с кнопками -->
     <div style="display: flex; gap: 4px; padding: 8px; background-color: var(--orchis-header); border-top: 1px solid var(--orchis-border); border-radius: 8px 8px 0 0;">
-      <button class="btn-func" data-action="view" title="F3"><span class="btn-key">F3</span><span class="btn-label">Просмотр</span></button>
-      <button class="btn-func" data-action="edit" title="F4"><span class="btn-key">F4</span><span class="btn-label">Правка</span></button>
-      <button class="btn-func" data-action="copy" title="F5"><span class="btn-key">F5</span><span class="btn-label">Копировать</span></button>
-      <button class="btn-func" data-action="move" title="F6"><span class="btn-key">F6</span><span class="btn-label">Переместить</span></button>
-      <button class="btn-func" data-action="mkdir" title="F7"><span class="btn-key">F7</span><span class="btn-label">Каталог</span></button>
-      <button class="btn-func" data-action="delete" title="F8"><span class="btn-key">F8</span><span class="btn-label">Удалить</span></button>
-      <button class="btn-func" data-action="menu" title="F9"><span class="btn-key">F9</span><span class="btn-label">Меню</span></button>
-      <button class="btn-func" data-action="exit" title="F10"><span class="btn-key">F10</span><span class="btn-label">Выход</span></button>
+      <button class="btn-func" data-action="view" title="F3">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        <span class="btn-key">F3</span><span class="btn-label">Просмотр</span>
+      </button>
+      <button class="btn-func" data-action="edit" title="F4">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+        <span class="btn-key">F4</span><span class="btn-label">Правка</span>
+      </button>
+      <button class="btn-func" data-action="copy" title="F5">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        <span class="btn-key">F5</span><span class="btn-label">Копировать</span>
+      </button>
+      <button class="btn-func" data-action="move" title="F6">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+        <span class="btn-key">F6</span><span class="btn-label">Переместить</span>
+      </button>
+      <button class="btn-func" data-action="mkdir" title="F7">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+        <span class="btn-key">F7</span><span class="btn-label">Папка</span>
+      </button>
+      <button class="btn-func" data-action="delete" title="F8">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        <span class="btn-key">F8</span><span class="btn-label">Удалить</span>
+      </button>
+      <button class="btn-func" data-action="menu" title="F9">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        <span class="btn-key">F9</span><span class="btn-label">Меню</span>
+      </button>
+      <button class="btn-func" data-action="exit" title="F10">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        <span class="btn-key">F10</span><span class="btn-label">Выход</span>
+      </button>
     </div>
 
     <!-- Строка состояния -->
@@ -153,6 +187,32 @@
       <div style="display: flex; gap: 8px; justify-content: flex-end;">
         <button id="ssh-cancel" class="btn-modal-cancel" style="padding: 8px 20px; background: #666; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">Отмена</button>
         <button id="ssh-ok" class="btn-modal-ok" style="padding: 8px 20px; background: var(--orchis-accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">Подключиться</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно SSH терминала -->
+  <div id="ssh-terminal-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center;">
+    <div class="modal-content" style="background: #1e1e1e; padding: 0; border-radius: 8px; min-width: 800px; min-height: 500px; display: flex; flex-direction: column;">
+      <!-- Заголовок терминала -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #2d2d30; border-radius: 8px 8px 0 0;">
+        <div style="display: flex; align-items: center; gap: 8px; color: #cccccc; font-size: 14px;">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#3584e4" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line><rect x="2" y="3" width="20" height="18" rx="2" ry="2"></rect></svg>
+          <span id="ssh-terminal-title">SSH Терминал</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button id="ssh-terminal-fullscreen" style="padding: 6px 12px; background: #3584e4; color: white; border: none; border-radius: 4px; cursor: pointer;" title="На весь экран">⛶</button>
+          <button id="ssh-terminal-close" style="padding: 6px 12px; background: #e01b24; color: white; border: none; border-radius: 4px; cursor: pointer;" title="Закрыть">✕</button>
+        </div>
+      </div>
+      
+      <!-- Окно терминала -->
+      <div id="ssh-terminal-output" style="flex: 1; padding: 16px; background: #1e1e1e; color: #cccccc; font-family: 'Consolas', 'Courier New', monospace; font-size: 14px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;"></div>
+      
+      <!-- Поле ввода -->
+      <div style="display: flex; padding: 12px 16px; background: #252526; border-top: 1px solid #3e3e42; border-radius: 0 0 8px 8px;">
+        <span style="color: #2ec27e; margin-right: 8px;">$</span>
+        <input type="text" id="ssh-terminal-input" style="flex: 1; background: transparent; border: none; color: #cccccc; font-family: 'Consolas', 'Courier New', monospace; font-size: 14px; outline: none;" placeholder="Введите команду..." autocomplete="off">
       </div>
     </div>
   </div>

@@ -21,3 +21,11 @@ contextBridge.exposeInMainWorld('sftpAPI', {
   delete: (connId, itemPath) => ipcRenderer.invoke('sftp-delete', connId, itemPath),
   getCurrentPath: () => ipcRenderer.invoke('sftp-get-current-path'),
 });
+
+// SSH Terminal
+contextBridge.exposeInMainWorld('sshTerminal', {
+  connect: (config) => ipcRenderer.invoke('ssh-shell-connect', config),
+  write: (shellId, data) => ipcRenderer.invoke('ssh-shell-write', shellId, data),
+  disconnect: (shellId) => ipcRenderer.invoke('ssh-shell-disconnect', shellId),
+  onData: (callback) => ipcRenderer.on('ssh-shell-data', (event, shellId, data) => callback(shellId, data)),
+});

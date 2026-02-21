@@ -223,3 +223,62 @@ ipcMain.handle('sftp-delete', async (event, connId, itemPath) => {
 });
 
 ipcMain.handle('sftp-get-current-path', () => '/');
+
+// SSH Terminal (Shell)
+let sshShells = {};
+
+ipcMain.handle('ssh-shell-connect', async (event, config) => {
+  return new Promise((resolve, reject) => {
+    const shellId = `shell_${Date.now()}`;
+    const client = new Client();
+    
+    client.on('ready', () => {
+      client.shell((err, stream) => {
+        if (err) {
+          client.end();
+          reject({ error: err.message });
+          return;
+        }
+        
+        sshShells[shellId] = { client, stream };
+        
+        let output = '';
+        stream.on('data', (data) => {
+          output += data.toString();
+          // Отправляем данные в renderer через event
+          mainWindow.webContents.send('ssh-shell-data', shellId, data.toString());
+        });
+        
+        resolve({ shellId, message: 'Терминал подключён' });
+      });
+    });
+    
+    client.on('error', (err) => {
+      reject({ error: `Ошибка: ${err.message}` });
+    });
+    
+    client.connect({
+      host: config.host,
+      port: config.port || 22,
+      username: config.username,
+      password: config.password,
+    });
+  });
+});
+
+ipcMain.handle('ssh-shell-write', async (event, shellId, data) => {
+  if (sshShells[shellId]) {
+    sshShells[shellId].stream.write(data);
+    return { success: true };
+  }
+  return { error: 'Терминал не найден' };
+});
+
+ipcMain.handle('ssh-shell-disconnect', async (event, shellId) => {
+  if (sshShells[shellId]) {
+    sshShells[shellId].client.end();
+    delete sshShells[shellId];
+    return { success: true };
+  }
+  return { error: 'Терминал не найден' };
+});
