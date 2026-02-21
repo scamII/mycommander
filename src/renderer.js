@@ -116,9 +116,11 @@ async function refreshPanel(panel) {
   try {
     let items;
     const isSftp = panel === 'right' && state.sshMode && state.sshConnId;
-    
+
     if (isSftp) {
+      console.log('SFTP read:', state.sshConnId, path);
       items = await window.sftpAPI.readDirectory(state.sshConnId, path);
+      console.log('SFTP items:', items);
     } else {
       items = await window.fileAPI.readDirectory(path);
     }
@@ -137,6 +139,7 @@ async function refreshPanel(panel) {
 
     // Добавляем ".." если не в корне
     const rootPath = isSftp ? '/' : await window.fileAPI.getCurrentPath();
+    console.log('rootPath:', rootPath, 'path:', path);
     if (path !== rootPath) {
       const tr = createFileRow({ name: '..', isDirectory: true, isParent: true }, panel);
       tbody.appendChild(tr);
@@ -154,6 +157,7 @@ async function refreshPanel(panel) {
     }
 
   } catch (error) {
+    console.error('refreshPanel error:', error);
     tbody.innerHTML = `<tr><td colspan="3" class="px-3 py-2 text-red-400">Ошибка: ${escapeHtml(error.message)}</td></tr>`;
   }
 
@@ -245,8 +249,15 @@ async function navigateUp(panel) {
 }
 
 function updatePathInputs() {
-  els.leftPath.value = state.leftPath;
-  els.rightPath.value = state.rightPath;
+  let leftPath = state.leftPath;
+  let rightPath = state.rightPath;
+  
+  // Исправляем двойной слеш
+  if (rightPath === '//') rightPath = '/';
+  if (leftPath === '//') leftPath = '/';
+  
+  els.leftPath.value = leftPath;
+  els.rightPath.value = rightPath;
 }
 
 function updateActivePanel() {
