@@ -34,12 +34,17 @@
     ],
     "icon": "icons/icon.png",
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "category": "Utility",
       "maintainer": "MyCommander Team <team@mycommander.local>"
     },
     "win": {
-      "target": ["portable"]
+      "target": [
+        "portable"
+      ]
     },
     "nsis": {
       "oneClick": false,
@@ -47,23 +52,35 @@
       "createDesktopShortcut": true
     },
     "deb": {
-      "depends": ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6"]
+      "depends": [
+        "libgtk-3-0",
+        "libnotify4",
+        "libnss3",
+        "libxss1",
+        "libxtst6"
+      ]
     },
     "rpm": {
-      "depends": ["libgtk-3-0", "libnotify", "nss", "libXScrnSaver", "libXtst"]
+      "depends": [
+        "libgtk-3-0",
+        "libnotify",
+        "nss",
+        "libXScrnSaver",
+        "libXtst"
+      ]
     }
   },
   "keywords": [],
-  "author": {
-    "name": "MyCommander Team",
-    "email": "team@mycommander.local"
-  },
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
     "@tailwindcss/cli": "^4.2.0",
     "electron": "^40.6.0",
     "electron-builder": "^26.8.1",
+    "ssh2": "^1.17.0",
     "tailwindcss": "^4.2.0"
+  },
+  "dependencies": {
+    "ssh2": "^1.17.0"
   }
 }
