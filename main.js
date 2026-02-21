@@ -1,8 +1,10 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { Client } = require('ssh2');
 
 let mainWindow;
+let sftpConnections = {};
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -124,3 +126,100 @@ ipcMain.handle('get-file-info', (event, filePath) => {
     isDirectory: stats.isDirectory(),
   };
 });
+
+// ==================== SSH/SFTP Обработчики ====================
+
+ipcMain.handle('sftp-connect', async (event, config) => {
+  return new Promise((resolve, reject) => {
+    const connId = `conn_${Date.now()}`;
+    const client = new Client();
+    
+    client.on('ready', () => {
+      client.sftp((err, sftp) => {
+        if (err) {
+          client.end();
+          reject({ error: err.message });
+          return;
+        }
+        sftpConnections[connId] = { client, sftp };
+        resolve({ connId, message: 'Подключено' });
+      });
+    });
+    
+    client.on('error', (err) => {
+      reject({ error: `Ошибка: ${err.message}` });
+    });
+    
+    client.connect({
+      host: config.host,
+      port: config.port || 22,
+      username: config.username,
+      password: config.password,
+    });
+  });
+});
+
+ipcMain.handle('sftp-disconnect', (event, connId) => {
+  if (sftpConnections[connId]) {
+    sftpConnections[connId].client.end();
+    delete sftpConnections[connId];
+    return { success: true };
+  }
+  return { success: false, error: 'Не найдено' };
+});
+
+ipcMain.handle('sftp-read-directory', async (event, connId, dirPath) => {
+  return new Promise((resolve, reject) => {
+    if (!sftpConnections[connId]) {
+      reject({ error: 'Не подключено' });
+      return;
+    }
+    
+    sftpConnections[connId].sftp.readdir(dirPath, (err, list) => {
+      if (err) {
+        reject({ error: err.message });
+        return;
+      }
+      resolve(list.map(item => ({
+        name: item.filename,
+        path: `${dirPath}/${item.filename}`,
+        isDirectory: item.attrs.isDirectory(),
+        size: item.attrs.size,
+        modified: new Date(item.attrs.mtime * 1000),
+      })));
+    });
+  });
+});
+
+ipcMain.handle('sftp-create-directory', async (event, connId, dirPath) => {
+  return new Promise((resolve, reject) => {
+    if (!sftpConnections[connId]) {
+      reject({ error: 'Не подключено' });
+      return;
+    }
+    sftpConnections[connId].sftp.mkdir(dirPath, { mode: 0o755 }, (err) => {
+      if (err) reject({ error: err.message });
+      else resolve({ success: true });
+    });
+  });
+});
+
+ipcMain.handle('sftp-delete', async (event, connId, itemPath) => {
+  return new Promise((resolve, reject) => {
+    if (!sftpConnections[connId]) {
+      reject({ error: 'Не подключено' });
+      return;
+    }
+    const sftp = sftpConnections[connId].sftp;
+    sftp.stat(itemPath, (err, stats) => {
+      if (err) { reject({ error: err.message }); return; }
+      if (stats.isDirectory()) {
+        sftp.rmdir(itemPath, (err) => err ? reject({ error: err.message }) : resolve({ success: true }));
+      } else {
+        sftp.unlink(itemPath, (err) => err ? reject({ error: err.message }) : resolve({ success: true }));
+      }
+    });
+  });
+});
+
+ipcMain.handle('sftp-get-current-path', () => '/');

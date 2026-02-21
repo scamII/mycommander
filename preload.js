@@ -12,3 +12,12 @@ contextBridge.exposeInMainWorld('fileAPI', {
   getFileInfo: (filePath) => ipcRenderer.invoke('get-file-info', filePath),
   exitApp: () => ipcRenderer.invoke('exit-app'),
 });
+
+contextBridge.exposeInMainWorld('sftpAPI', {
+  connect: (config) => ipcRenderer.invoke('sftp-connect', config),
+  disconnect: (connId) => ipcRenderer.invoke('sftp-disconnect', connId),
+  readDirectory: (connId, dirPath) => ipcRenderer.invoke('sftp-read-directory', connId, dirPath),
+  createDirectory: (connId, dirPath) => ipcRenderer.invoke('sftp-create-directory', connId, dirPath),
+  delete: (connId, itemPath) => ipcRenderer.invoke('sftp-delete', connId, itemPath),
+  getCurrentPath: () => ipcRenderer.invoke('sftp-get-current-path'),
+});
