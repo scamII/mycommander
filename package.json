@@ -1,0 +1,60 @@
+{
+  "name": "mycommander",
+  "version": "1.0.0",
+  "description": "Файловый менеджер в стиле TotalCommander",
+  "author": {
+    "name": "MyCommander Team",
+    "email": "team@mycommander.local"
+  },
+  "homepage": "https://github.com/mycommander/mycommander",
+  "main": "main.js",
+  "scripts": {
+    "build:css": "npx @tailwindcss/cli -i ./src/styles.css -o ./dist/styles.css",
+    "watch:css": "npx @tailwindcss/cli -i ./src/styles.css -o ./dist/styles.css --watch",
+    "start": "npm run build:css && electron .",
+    "dev": "npm run watch:css & electron .",
+    "dist": "npm run build:css && electron-builder",
+    "dist:linux": "npm run build:css && electron-builder --linux",
+    "dist:win": "npm run build:css && electron-builder --win",
+    "dist:all": "npm run build:css && electron-builder --linux --win",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "build": {
+    "appId": "com.mycommander.app",
+    "productName": "MyCommander",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "**/*",
+      "!release/**",
+      "!src/**",
+      "!.gitignore",
+      "!.qwen/**"
+    ],
+    "icon": "icons/icon.png",
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Utility",
+      "maintainer": "MyCommander Team <team@mycommander.local>"
+    },
+    "win": {
+      "target": ["portable"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    },
+    "deb": {
+      "depends": ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6"]
+    },
+    "rpm": {
+      "depends": ["libgtk-3-0", "libnotify", "nss", "libXScrnSaver", "libXtst"]
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

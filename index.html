@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+  <title>MyCommander</title>
+  <link rel="stylesheet" href="dist/styles.css">
+</head>
+<body>
+  <div style="display: flex; flex-direction: column; height: 100vh;">
+    <!-- Верхняя панель с переключателем темы -->
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background-color: var(--orchis-header); border-bottom: 1px solid var(--orchis-border);">
+      <button id="btn-toggle-hidden" class="btn-orchis btn-small" title="Показать/Скрыть файлы">👁 Показать/Скрыть</button>
+      <button id="btn-theme" style="padding: 6px 12px; background-color: #666; color: white; border-radius: 6px; font-size: 12px; border: none; cursor: pointer;" title="Переключить тему">
+        <span id="theme-icon">🌙</span>
+      </button>
+    </div>
+
+    <!-- Две панели файлов -->
+    <div style="display: flex; flex: 1; gap: 4px; padding: 4px; overflow: hidden;">
+      <!-- Левая панель -->
+      <div class="panel left-panel" style="flex: 1; display: flex; flex-direction: column; background-color: var(--orchis-panel); border: 1px solid var(--orchis-border); border-radius: 8px;">
+        <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px; background-color: var(--orchis-header); border-bottom: 1px solid var(--orchis-border); border-radius: 8px 8px 0 0;">
+          <span style="font-size: 12px; color: var(--orchis-text-muted); text-transform: uppercase; font-weight: 600;">Левая панель</span>
+          <input type="text" class="path-input" id="left-path">
+        </div>
+        <div class="file-list-container">
+          <table class="file-list" id="left-file-list">
+            <thead>
+              <tr>
+                <th style="width: 60%;">Имя</th>
+                <th style="width: 20%;">Размер</th>
+                <th style="width: 20%;">Дата изменения</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Правая панель -->
+      <div class="panel right-panel" style="flex: 1; display: flex; flex-direction: column; background-color: var(--orchis-panel); border: 1px solid var(--orchis-border); border-radius: 8px;">
+        <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px; background-color: var(--orchis-header); border-bottom: 1px solid var(--orchis-border); border-radius: 8px 8px 0 0;">
+          <span style="font-size: 12px; color: var(--orchis-text-muted); text-transform: uppercase; font-weight: 600;">Правая панель</span>
+          <input type="text" class="path-input" id="right-path">
+        </div>
+        <div class="file-list-container">
+          <table class="file-list" id="right-file-list">
+            <thead>
+              <tr>
+                <th style="width: 60%;">Имя</th>
+                <th style="width: 20%;">Размер</th>
+                <th style="width: 20%;">Дата изменения</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Нижняя панель с кнопками -->
+    <div style="display: flex; gap: 4px; padding: 8px; background-color: var(--orchis-header); border-top: 1px solid var(--orchis-border); border-radius: 8px 8px 0 0;">
+      <button class="btn-func" data-action="view" title="F3"><span class="btn-key">F3</span><span class="btn-label">Просмотр</span></button>
+      <button class="btn-func" data-action="edit" title="F4"><span class="btn-key">F4</span><span class="btn-label">Правка</span></button>
+      <button class="btn-func" data-action="copy" title="F5"><span class="btn-key">F5</span><span class="btn-label">Копировать</span></button>
+      <button class="btn-func" data-action="move" title="F6"><span class="btn-key">F6</span><span class="btn-label">Переместить</span></button>
+      <button class="btn-func" data-action="mkdir" title="F7"><span class="btn-key">F7</span><span class="btn-label">Каталог</span></button>
+      <button class="btn-func" data-action="delete" title="F8"><span class="btn-key">F8</span><span class="btn-label">Удалить</span></button>
+      <button class="btn-func" data-action="menu" title="F9"><span class="btn-key">F9</span><span class="btn-label">Меню</span></button>
+      <button class="btn-func" data-action="exit" title="F10"><span class="btn-key">F10</span><span class="btn-label">Выход</span></button>
+    </div>
+
+    <!-- Строка состояния -->
+    <div style="display: flex; justify-content: space-between; padding: 6px 12px; background-color: var(--orchis-accent); color: white; font-size: 12px; border-radius: 0 0 8px 8px;">
+      <span id="status-left">Готов</span>
+      <span id="status-right"></span>
+    </div>
+  </div>
+
+  <!-- Модальное окно для ввода -->
+  <div id="input-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="modal-content" style="background: var(--orchis-panel); padding: 24px; border-radius: 12px; min-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+      <h3 id="modal-title" style="margin: 0 0 16px 0; color: var(--orchis-text); font-size: 18px;">Ввод</h3>
+      <input type="text" id="modal-input" class="modal-input" style="width: 100%; padding: 10px; margin-bottom: 16px; background: var(--orchis-bg); border: 1px solid var(--orchis-border); color: var(--orchis-text); border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button id="modal-cancel" class="btn-modal-cancel" style="padding: 8px 20px; background: #666; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">Отмена</button>
+        <button id="modal-ok" class="btn-modal-ok" style="padding: 8px 20px; background: var(--orchis-accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно для F5/F6 -->
+  <div id="copy-move-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="modal-content" style="background: var(--orchis-panel); padding: 24px; border-radius: 12px; min-width: 500px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+      <h3 id="copy-move-title" style="margin: 0 0 16px 0; color: var(--orchis-text); font-size: 18px;">Копирование</h3>
+      <div style="margin-bottom: 12px;">
+        <label style="display: block; color: var(--orchis-text-muted); font-size: 12px; margin-bottom: 4px;">Что:</label>
+        <div id="copy-move-source" style="color: var(--orchis-text); font-size: 14px; padding: 8px; background: var(--orchis-bg); border-radius: 6px;"></div>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; color: var(--orchis-text-muted); font-size: 12px; margin-bottom: 4px;">Куда:</label>
+        <input type="text" id="copy-move-dest" class="modal-input" style="width: 100%; padding: 10px; background: var(--orchis-bg); border: 1px solid var(--orchis-border); color: var(--orchis-text); border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: flex; align-items: center; gap: 8px; color: var(--orchis-text); font-size: 14px; cursor: pointer;">
+          <input type="checkbox" id="copy-move-overwrite" style="width: 16px; height: 16px;">
+          Заменить существующие файлы
+        </label>
+      </div>
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button id="copy-move-cancel" class="btn-modal-cancel" style="padding: 8px 20px; background: #666; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">Отмена</button>
+        <button id="copy-move-ok" class="btn-modal-ok" style="padding: 8px 20px; background: var(--orchis-accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
