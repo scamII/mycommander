@@ -353,7 +353,80 @@ function hideSshModal() {
 }
 
 function showSshTerminalModal() {
-  // Показываем модальное окно терминала для подключения
+  // Показываем модальное окно подключения
+  const connectModal = document.getElementById('ssh-terminal-connect-modal');
+  const connectOk = document.getElementById('ssh-term-connect-ok');
+  const connectCancel = document.getElementById('ssh-term-connect-cancel');
+  const hostInput = document.getElementById('ssh-term-host');
+  const portInput = document.getElementById('ssh-term-port');
+  const usernameInput = document.getElementById('ssh-term-username');
+  const passwordInput = document.getElementById('ssh-term-password');
+  
+  if (!connectModal || !hostInput) {
+    console.error('SSH Terminal connect modal not found!');
+    return;
+  }
+  
+  // Очищаем поля
+  hostInput.value = '';
+  portInput.value = '22';
+  usernameInput.value = '';
+  passwordInput.value = '';
+  
+  // Показываем окно
+  connectModal.style.display = 'flex';
+  hostInput.focus();
+  
+  // Обработчик кнопки OK
+  const handleConnect = () => {
+    const config = {
+      host: hostInput.value.trim(),
+      port: parseInt(portInput.value) || 22,
+      username: usernameInput.value.trim(),
+      password: passwordInput.value,
+    };
+    
+    if (!config.host || !config.username || !config.password) {
+      alert('Введите хост, имя пользователя и пароль');
+      return;
+    }
+    
+    // Скрываем окно подключения
+    connectModal.style.display = 'none';
+    connectOk.removeEventListener('click', handleConnect);
+    connectCancel.removeEventListener('click', handleCancel);
+    
+    // Показываем окно терминала и подключаемся
+    openSshTerminalWindow(config);
+  };
+  
+  // Обработчик кнопки Cancel
+  const handleCancel = () => {
+    connectModal.style.display = 'none';
+    connectOk.removeEventListener('click', handleConnect);
+    connectCancel.removeEventListener('click', handleCancel);
+  };
+  
+  // Вешаем обработчики
+  connectOk.addEventListener('click', handleConnect);
+  connectCancel.addEventListener('click', handleCancel);
+  
+  // Enter в поле пароля
+  passwordInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      handleConnect();
+    }
+  });
+  
+  // Escape закрывает
+  connectModal.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      handleCancel();
+    }
+  });
+}
+
+function openSshTerminalWindow(config) {
   const modal = document.getElementById('ssh-terminal-modal');
   const title = document.getElementById('ssh-terminal-title');
   const output = document.getElementById('ssh-terminal-output');
@@ -364,27 +437,11 @@ function showSshTerminalModal() {
     return;
   }
   
-  // Спрашиваем данные для подключения
-  const host = prompt('Хост (например, 192.168.1.100):');
-  if (!host) return;
-  
-  const port = prompt('Порт (22):', '22') || '22';
-  const username = prompt('Имя пользователя (root):');
-  if (!username) return;
-  
-  const password = prompt('Пароль:');
-  if (!password) return;
-  
-  title.textContent = `SSH: ${username}@${host}`;
-  output.textContent = `Connecting to ${host}:${port}...\n`;
+  title.textContent = `SSH: ${config.username}@${config.host}`;
+  output.textContent = `Connecting to ${config.host}:${config.port}...\n`;
   
   // Подключаемся
-  sshTerminal.connect({
-    host: host,
-    port: parseInt(port),
-    username: username,
-    password: password,
-  }).then(connected => {
+  sshTerminal.connect(config).then(connected => {
     console.log('SSH Terminal connected:', connected);
     if (connected) {
       modal.style.display = 'flex';
@@ -639,6 +696,8 @@ function setupEventListeners() {
   const sshTerminalClose = document.getElementById('ssh-terminal-close');
   const sshTerminalFullscreen = document.getElementById('ssh-terminal-fullscreen');
   const sshTerminalInput = document.getElementById('ssh-terminal-input');
+  const sshTerminalConnectModal = document.getElementById('ssh-terminal-connect-modal');
+  const sshTermConnectCancel = document.getElementById('ssh-term-connect-cancel');
   
   if (sshTerminalClose) {
     sshTerminalClose.addEventListener('click', () => {
@@ -646,7 +705,7 @@ function setupEventListeners() {
       sshTerminalModal.style.display = 'none';
     });
   }
-  
+
   if (sshTerminalFullscreen) {
     sshTerminalFullscreen.addEventListener('click', () => {
       if (document.fullscreenElement) {
@@ -656,7 +715,7 @@ function setupEventListeners() {
       }
     });
   }
-  
+
   if (sshTerminalInput) {
     sshTerminalInput.addEventListener('keydown', async (e) => {
       if (e.key === 'Enter') {
@@ -666,11 +725,26 @@ function setupEventListeners() {
       }
     });
   }
-  
+
   if (sshTerminalModal) {
     sshTerminalModal.addEventListener('click', (e) => {
       if (e.target === sshTerminalModal) {
         sshTerminalModal.style.display = 'none';
+      }
+    });
+  }
+  
+  // Модальное окно подключения SSH терминала
+  if (sshTermConnectCancel) {
+    sshTermConnectCancel.addEventListener('click', () => {
+      sshTerminalConnectModal.style.display = 'none';
+    });
+  }
+  
+  if (sshTerminalConnectModal) {
+    sshTerminalConnectModal.addEventListener('click', (e) => {
+      if (e.target === sshTerminalConnectModal) {
+        sshTerminalConnectModal.style.display = 'none';
       }
     });
   }

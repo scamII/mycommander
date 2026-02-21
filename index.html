@@ -217,6 +217,39 @@
     </div>
   </div>
 
+  <!-- Модальное окно подключения SSH терминала -->
+  <div id="ssh-terminal-connect-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;">
+    <div class="modal-content" style="background: var(--orchis-panel); padding: 24px; border-radius: 12px; min-width: 450px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+      <h3 id="ssh-terminal-connect-title" style="margin: 0 0 20px 0; color: var(--orchis-text); font-size: 18px;">🔗 Подключение к SSH Терминалу</h3>
+      
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 12px;">
+        <div>
+          <label style="display: block; color: var(--orchis-text-muted); font-size: 12px; margin-bottom: 4px;">Хост</label>
+          <input type="text" id="ssh-term-host" class="modal-input" placeholder="192.168.1.100" style="width: 100%; padding: 10px; background: var(--orchis-bg); border: 1px solid var(--orchis-border); color: var(--orchis-text); border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+        </div>
+        <div>
+          <label style="display: block; color: var(--orchis-text-muted); font-size: 12px; margin-bottom: 4px;">Порт</label>
+          <input type="number" id="ssh-term-port" class="modal-input" value="22" style="width: 100%; padding: 10px; background: var(--orchis-bg); border: 1px solid var(--orchis-border); color: var(--orchis-text); border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+        </div>
+      </div>
+      
+      <div style="margin-bottom: 12px;">
+        <label style="display: block; color: var(--orchis-text-muted); font-size: 12px; margin-bottom: 4px;">Имя пользователя</label>
+        <input type="text" id="ssh-term-username" class="modal-input" placeholder="root" style="width: 100%; padding: 10px; background: var(--orchis-bg); border: 1px solid var(--orchis-border); color: var(--orchis-text); border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+      </div>
+      
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; color: var(--orchis-text-muted); font-size: 12px; margin-bottom: 4px;">Пароль</label>
+        <input type="password" id="ssh-term-password" class="modal-input" placeholder="••••••••" style="width: 100%; padding: 10px; background: var(--orchis-bg); border: 1px solid var(--orchis-border); color: var(--orchis-text); border-radius: 6px; font-size: 14px; box-sizing: border-box;">
+      </div>
+      
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button id="ssh-term-connect-cancel" class="btn-modal-cancel" style="padding: 8px 20px; background: #666; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">Отмена</button>
+        <button id="ssh-term-connect-ok" class="btn-modal-ok" style="padding: 8px 20px; background: var(--orchis-accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">Подключиться</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="src/renderer.js"></script>
 </body>
 </html>
