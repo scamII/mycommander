@@ -195,13 +195,21 @@ ipcMain.handle('sftp-read-directory', async (event, connId, dirPath) => {
         return;
       }
       console.log('[SFTP] Files found:', list.length);
-      resolve(list.map(item => ({
-        name: item.filename,
-        path: `${dirPath}/${item.filename}`,
-        isDirectory: item.attrs.isDirectory(),
-        size: item.attrs.size,
-        modified: new Date(item.attrs.mtime * 1000),
-      })));
+      
+      // Исправляем формирование пути - убираем двойной слеш
+      resolve(list.map(item => {
+        const itemPath = dirPath === '/' 
+          ? `/${item.filename}`
+          : `${dirPath}/${item.filename}`;
+        
+        return {
+          name: item.filename,
+          path: itemPath,
+          isDirectory: item.attrs.isDirectory(),
+          size: item.attrs.size,
+          modified: new Date(item.attrs.mtime * 1000),
+        };
+      }));
     });
   });
 });
