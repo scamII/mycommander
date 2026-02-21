@@ -717,13 +717,7 @@ function setupEventListeners() {
   }
 
   if (sshTerminalInput) {
-    sshTerminalInput.addEventListener('keydown', async (e) => {
-      if (e.key === 'Enter') {
-        const cmd = sshTerminalInput.value;
-        sshTerminalInput.value = '';
-        await sshTerminal.sendCommand(cmd);
-      }
-    });
+    // Обработчик теперь в ssh-terminal.js setup()
   }
 
   if (sshTerminalModal) {

@@ -33,17 +33,20 @@ export class SshTerminal {
   async connect(config) {
     try {
       const result = await window.sshTerminal.connect(config);
-      
+
       if (result.error) {
         throw new Error(result.error);
       }
 
       this.shellId = result.shellId;
       this.isConnected = true;
-      
+
       this.output.textContent = `Connected to ${config.host}:${config.port}\n`;
       this.output.textContent += `Type 'exit' to disconnect\n\n`;
-      
+
+      // Настраиваем обработчики
+      this.setup();
+
       // Подписка на данные от сервера
       window.sshTerminal.onData((shellId, data) => {
         if (shellId === this.shellId) {
