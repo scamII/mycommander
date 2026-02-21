@@ -19,6 +19,9 @@ function createWindow() {
   });
 
   mainWindow.loadFile('index.html');
+  
+  // Открываем DevTools для отладки
+  mainWindow.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {
@@ -130,23 +133,30 @@ ipcMain.handle('get-file-info', (event, filePath) => {
 // ==================== SSH/SFTP Обработчики ====================
 
 ipcMain.handle('sftp-connect', async (event, config) => {
+  console.log('[SFTP] Connect attempt:', config.host, config.port, config.username);
+  
   return new Promise((resolve, reject) => {
     const connId = `conn_${Date.now()}`;
     const client = new Client();
     
     client.on('ready', () => {
+      console.log('[SFTP] Client ready');
+      
       client.sftp((err, sftp) => {
         if (err) {
+          console.error('[SFTP] SFTP session error:', err);
           client.end();
           reject({ error: err.message });
           return;
         }
+        console.log('[SFTP] SFTP session established, connId:', connId);
         sftpConnections[connId] = { client, sftp };
         resolve({ connId, message: 'Подключено' });
       });
     });
     
     client.on('error', (err) => {
+      console.error('[SFTP] Client error:', err);
       reject({ error: `Ошибка: ${err.message}` });
     });
     
@@ -169,17 +179,22 @@ ipcMain.handle('sftp-disconnect', (event, connId) => {
 });
 
 ipcMain.handle('sftp-read-directory', async (event, connId, dirPath) => {
+  console.log('[SFTP] Read directory:', connId, dirPath);
+  
   return new Promise((resolve, reject) => {
     if (!sftpConnections[connId]) {
+      console.error('[SFTP] Connection not found:', connId);
       reject({ error: 'Не подключено' });
       return;
     }
     
     sftpConnections[connId].sftp.readdir(dirPath, (err, list) => {
       if (err) {
+        console.error('[SFTP] Readdir error:', err);
         reject({ error: err.message });
         return;
       }
+      console.log('[SFTP] Files found:', list.length);
       resolve(list.map(item => ({
         name: item.filename,
         path: `${dirPath}/${item.filename}`,
@@ -228,25 +243,30 @@ ipcMain.handle('sftp-get-current-path', () => '/');
 let sshShells = {};
 
 ipcMain.handle('ssh-shell-connect', async (event, config) => {
+  console.log('[SSH-Shell] Connect attempt:', config.host, config.port, config.username);
+  
   return new Promise((resolve, reject) => {
     const shellId = `shell_${Date.now()}`;
     const client = new Client();
     
     client.on('ready', () => {
+      console.log('[SSH-Shell] Client ready');
+      
       client.shell((err, stream) => {
         if (err) {
+          console.error('[SSH-Shell] Shell error:', err);
           client.end();
           reject({ error: err.message });
           return;
         }
         
+        console.log('[SSH-Shell] Shell established, shellId:', shellId);
         sshShells[shellId] = { client, stream };
         
-        let output = '';
         stream.on('data', (data) => {
-          output += data.toString();
-          // Отправляем данные в renderer через event
-          mainWindow.webContents.send('ssh-shell-data', shellId, data.toString());
+          const dataStr = data.toString();
+          // console.log('[SSH-Shell] Data received:', dataStr.substring(0, 100));
+          mainWindow.webContents.send('ssh-shell-data', shellId, dataStr);
         });
         
         resolve({ shellId, message: 'Терминал подключён' });
@@ -254,6 +274,7 @@ ipcMain.handle('ssh-shell-connect', async (event, config) => {
     });
     
     client.on('error', (err) => {
+      console.error('[SSH-Shell] Client error:', err);
       reject({ error: `Ошибка: ${err.message}` });
     });
     
