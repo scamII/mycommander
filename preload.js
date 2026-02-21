@@ -23,5 +23,5 @@ contextBridge.exposeInMainWorld('sftpAPI', {
   rename: (connId, oldPath, newName) => ipcRenderer.invoke('sftp-rename', connId, oldPath, newName),
   upload: (connId, localPath, remotePath) => ipcRenderer.invoke('sftp-upload', connId, localPath, remotePath),
   download: (connId, remotePath, localPath) => ipcRenderer.invoke('sftp-download', connId, remotePath, localPath),
-  getCurrentPath: () => ipcRenderer.invoke('sftp-get-current-path'),
+  getCurrentPath: () => '/',
 });

@@ -10,15 +10,19 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
-    autoHideMenuBar: true,  // Скрыть меню
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
+      enableRemoteModule: false,
     },
   });
 
   mainWindow.loadFile('index.html');
+  
+  // Открываем DevTools в режиме разработки
+  // mainWindow.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {
