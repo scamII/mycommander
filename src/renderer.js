@@ -227,7 +227,12 @@ function selectItem(panel, item, tr) {
 
 async function openItem(panel, item) {
   if (item.isDirectory) {
-    state[`${panel}Path`] = item.path;
+    // Исправляем путь для SFTP
+    if (panel === 'right' && state.sshMode) {
+      state[`${panel}Path`] = item.path.startsWith('/') ? item.path : '/' + item.path;
+    } else {
+      state[`${panel}Path`] = item.path;
+    }
     updatePathInputs();
     await refreshPanel(panel);
   }
@@ -236,15 +241,21 @@ async function openItem(panel, item) {
 async function navigateUp(panel) {
   const currentPath = state[`${panel}Path`];
   let newPath;
-  
+
   if (panel === 'right' && state.sshMode) {
-    const parts = currentPath.split('/').filter(p => p);
-    parts.pop();
-    newPath = '/' + parts.join('/') || '/';
+    // Исправляем навигацию вверх для SFTP
+    if (currentPath === '/' || currentPath === '') {
+      newPath = '/';
+    } else {
+      const parts = currentPath.split('/').filter(p => p);
+      parts.pop();
+      newPath = '/' + parts.join('/');
+      if (newPath === '') newPath = '/';
+    }
   } else {
     newPath = await window.fileAPI.navigateUp(currentPath);
   }
-  
+
   state[`${panel}Path`] = newPath;
   updatePathInputs();
   await refreshPanel(panel);
@@ -256,7 +267,9 @@ function updatePathInputs() {
   
   // Исправляем двойной слеш
   if (rightPath === '//') rightPath = '/';
+  if (rightPath && rightPath.startsWith('//')) rightPath = rightPath.replace('//', '/');
   if (leftPath === '//') leftPath = '/';
+  if (leftPath && leftPath.startsWith('//')) leftPath = leftPath.replace('//', '/');
   
   els.leftPath.value = leftPath;
   els.rightPath.value = rightPath;
@@ -343,6 +356,13 @@ function showSshTerminalModal() {
   // Показываем модальное окно терминала для подключения
   const modal = document.getElementById('ssh-terminal-modal');
   const title = document.getElementById('ssh-terminal-title');
+  const output = document.getElementById('ssh-terminal-output');
+  const input = document.getElementById('ssh-terminal-input');
+  
+  if (!modal || !output || !input) {
+    console.error('SSH Terminal elements not found!');
+    return;
+  }
   
   // Спрашиваем данные для подключения
   const host = prompt('Хост (например, 192.168.1.100):');
@@ -356,6 +376,7 @@ function showSshTerminalModal() {
   if (!password) return;
   
   title.textContent = `SSH: ${username}@${host}`;
+  output.textContent = `Connecting to ${host}:${port}...\n`;
   
   // Подключаемся
   sshTerminal.connect({
@@ -364,9 +385,17 @@ function showSshTerminalModal() {
     username: username,
     password: password,
   }).then(connected => {
+    console.log('SSH Terminal connected:', connected);
     if (connected) {
       modal.style.display = 'flex';
+      output.textContent += 'Connected! Type commands below.\n\n';
+      input.focus();
+    } else {
+      output.textContent += 'Connection failed!\n';
     }
+  }).catch(err => {
+    console.error('SSH Terminal error:', err);
+    output.textContent += `Error: ${err.message}\n`;
   });
 }
 
