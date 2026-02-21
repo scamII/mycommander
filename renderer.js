@@ -7,6 +7,10 @@ const state = {
   rightSelected: null,
   isDarkTheme: true,
   showHiddenFiles: false,
+  // SSH состояние
+  sshConnections: {}, // Сохранённые подключения
+  currentSshConn: null, // Текущее SSH соединение
+  sshMode: false, // Режим SSH активен
 };
 
 // Элементы DOM
@@ -28,6 +32,7 @@ const elements = {
   modalOk: document.getElementById('modal-ok'),
   modalCancel: document.getElementById('modal-cancel'),
   btnToggleHidden: document.getElementById('btn-toggle-hidden'),
+  btnSshConnect: document.getElementById('btn-ssh-connect'),
   // Элементы модального окна F5/F6
   copyMoveModal: document.getElementById('copy-move-modal'),
   copyMoveTitle: document.getElementById('copy-move-title'),
@@ -36,6 +41,15 @@ const elements = {
   copyMoveOk: document.getElementById('copy-move-ok'),
   copyMoveCancel: document.getElementById('copy-move-cancel'),
   copyMoveOverwrite: document.getElementById('copy-move-overwrite'),
+  // Элементы модального окна SSH
+  sshModal: document.getElementById('ssh-modal'),
+  sshHost: document.getElementById('ssh-host'),
+  sshPort: document.getElementById('ssh-port'),
+  sshUsername: document.getElementById('ssh-username'),
+  sshPassword: document.getElementById('ssh-password'),
+  sshSaveConnection: document.getElementById('ssh-save-connection'),
+  sshOk: document.getElementById('ssh-ok'),
+  sshCancel: document.getElementById('ssh-cancel'),
 };
 
 // Модальное окно
@@ -75,15 +89,105 @@ function hideCopyMoveModal() {
   elements.copyMoveModal.style.display = 'none';
 }
 
+// ==================== SSH Функции ====================
+
+function showSshModal() {
+  elements.sshHost.value = '';
+  elements.sshPort.value = '22';
+  elements.sshUsername.value = '';
+  elements.sshPassword.value = '';
+  elements.sshSaveConnection.checked = false;
+  elements.sshModal.style.display = 'flex';
+  elements.sshHost.focus();
+}
+
+function hideSshModal() {
+  elements.sshModal.style.display = 'none';
+}
+
+async function connectToSsh() {
+  const config = {
+    host: elements.sshHost.value.trim(),
+    port: parseInt(elements.sshPort.value) || 22,
+    username: elements.sshUsername.value.trim(),
+    password: elements.sshPassword.value,
+  };
+  
+  if (!config.host || !config.username) {
+    alert('Введите хост и имя пользователя');
+    return;
+  }
+  
+  try {
+    const result = await window.sftpAPI.connect(config);
+    if (result.error) {
+      alert(`Ошибка подключения: ${result.error}`);
+      return;
+    }
+    
+    state.currentSshConn = result.connId;
+    state.sshMode = true;
+    
+    // Сохраняем подключение если нужно
+    if (elements.sshSaveConnection.checked) {
+      const connName = `${config.username}@${config.host}`;
+      state.sshConnections[connName] = { ...config, id: result.connId };
+      localStorage.setItem('sshConnections', JSON.stringify(state.sshConnections));
+    }
+    
+    showStatus(`Подключено к ${config.host}`);
+    hideSshModal();
+    
+    // Переключаем правую панель на SFTP
+    state.rightPath = '/';
+    updatePathInputs();
+    await refreshPanel('right');
+    
+  } catch (error) {
+    alert(`Ошибка: ${error.message || error}`);
+  }
+}
+
+async function disconnectFromSsh() {
+  if (state.currentSshConn) {
+    try {
+      await window.sftpAPI.disconnect(state.currentSshConn);
+      state.currentSshConn = null;
+      state.sshMode = false;
+      state.rightPath = await window.fileAPI.getCurrentPath();
+      updatePathInputs();
+      await refreshPanel('right');
+      showStatus('Отключено от SSH');
+    } catch (error) {
+      console.error('Ошибка отключения:', error);
+    }
+  }
+}
+
+// Загрузка сохранённых подключений
+function loadSavedConnections() {
+  try {
+    const saved = localStorage.getItem('sshConnections');
+    if (saved) {
+      state.sshConnections = JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error('Ошибка загрузки подключений:', e);
+  }
+}
+
 // Инициализация
 async function init() {
   const homePath = await window.fileAPI.getCurrentPath();
   state.leftPath = homePath;
   state.rightPath = homePath;
-  
+
   // Загрузка сохранённой темы
   loadTheme();
   
+  // Загрузка сохранённых SSH подключений
+  loadSavedConnections();
+
   await refreshPanel('left');
   await refreshPanel('right');
   updatePathInputs();
@@ -99,7 +203,14 @@ async function refreshPanel(panel) {
   const tbody = fileList.querySelector('tbody');
 
   try {
-    let items = await window.fileAPI.readDirectory(path);
+    let items;
+    
+    // Проверяем это SFTP панель (правая при подключении к SSH)
+    if (panel === 'right' && state.currentSshConn) {
+      items = await window.sftpAPI.readDirectory(state.currentSshConn, path);
+    } else {
+      items = await window.fileAPI.readDirectory(path);
+    }
 
     // Фильтрация скрытых файлов
     if (!state.showHiddenFiles) {
@@ -212,7 +323,18 @@ async function openItem(panel, item) {
 // Навигация вверх
 async function navigateUp(panel) {
   const currentPath = state[`${panel}Path`];
-  const newPath = await window.fileAPI.navigateUp(currentPath);
+  
+  let newPath;
+  if (panel === 'right' && state.currentSshConn) {
+    // SFTP навигация
+    const parts = currentPath.split('/').filter(p => p);
+    parts.pop();
+    newPath = '/' + parts.join('/') || '/';
+  } else {
+    // Локальная навигация
+    newPath = await window.fileAPI.navigateUp(currentPath);
+  }
+  
   state[`${panel}Path`] = newPath;
   updatePathInputs();
   await refreshPanel(panel);
@@ -328,6 +450,42 @@ function setupEventListeners() {
     refreshPanel('left');
     refreshPanel('right');
     showStatus(state.showHiddenFiles ? 'Показаны скрытые файлы' : 'Скрытые файлы скрыты');
+  });
+
+  // Кнопка SSH подключения
+  elements.btnSshConnect.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (state.currentSshConn) {
+      // Уже подключены - показываем меню
+      const isDisconnect = confirm('Отключиться от SSH сервера?');
+      if (isDisconnect) {
+        disconnectFromSsh();
+      }
+    } else {
+      showSshModal();
+    }
+  });
+
+  // Обработчики SSH модального окна
+  elements.sshOk.addEventListener('click', () => {
+    connectToSsh();
+  });
+
+  elements.sshCancel.addEventListener('click', () => {
+    hideSshModal();
+  });
+
+  elements.sshPassword.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      connectToSsh();
+    }
+  });
+
+  // Закрытие SSH модального окна по клику вне
+  elements.sshModal.addEventListener('click', (e) => {
+    if (e.target === elements.sshModal) {
+      hideSshModal();
+    }
   });
 
   // Функциональные кнопки (F3-F10)
