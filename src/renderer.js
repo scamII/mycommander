@@ -3,6 +3,8 @@
  * Исправлены все баги: файлы, кнопки, темы, SSH
  */
 
+import { sshTerminal } from './ssh-terminal.js';
+
 // ==================== Состояние ====================
 const state = {
   leftPath: '',
@@ -322,6 +324,7 @@ function hideCopyMoveModal() {
 }
 
 // ==================== SSH ====================
+
 function showSshModal() {
   els.sshName.value = '';
   els.sshHost.value = '';
@@ -334,6 +337,42 @@ function showSshModal() {
 
 function hideSshModal() {
   els.sshModal.style.display = 'none';
+}
+
+function showSshTerminalModal() {
+  // Показываем модальное окно терминала для подключения
+  const modal = document.getElementById('ssh-terminal-modal');
+  const title = document.getElementById('ssh-terminal-title');
+  
+  // Спрашиваем данные для подключения
+  const host = prompt('Хост (например, 192.168.1.100):');
+  if (!host) return;
+  
+  const port = prompt('Порт (22):', '22') || '22';
+  const username = prompt('Имя пользователя (root):');
+  if (!username) return;
+  
+  const password = prompt('Пароль:');
+  if (!password) return;
+  
+  title.textContent = `SSH: ${username}@${host}`;
+  
+  // Подключаемся
+  sshTerminal.connect({
+    host: host,
+    port: parseInt(port),
+    username: username,
+    password: password,
+  }).then(connected => {
+    if (connected) {
+      modal.style.display = 'flex';
+    }
+  });
+}
+
+function hideSshTerminalModal() {
+  const modal = document.getElementById('ssh-terminal-modal');
+  modal.style.display = 'none';
 }
 
 async function connectToSsh() {
@@ -356,7 +395,7 @@ async function connectToSsh() {
 
     state.sshConnId = result.connId;
     state.sshMode = true;
-    state.rightPath = '/';
+    state.rightPath = '/';  // Исправлено: только один слеш
     
     // Сохраняем подключение
     if (config.name) {
@@ -515,15 +554,24 @@ function setupEventListeners() {
     showStatus(state.showHiddenFiles ? 'Показаны скрытые' : 'Скрытые скрыты');
   });
 
-  // SSH кнопка
+  // SSH кнопка (SFTP)
   els.sshBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     if (state.sshMode) {
-      if (confirm('Отключиться от SSH?')) disconnectFromSsh();
+      if (confirm('Отключиться от SFTP?')) disconnectFromSsh();
     } else {
       showSshModal();
     }
   });
+
+  // SSH Терминал кнопка
+  const sshTerminalBtn = document.getElementById('btn-ssh-terminal');
+  if (sshTerminalBtn) {
+    sshTerminalBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showSshTerminalModal();
+    });
+  }
 
   // SSH модальное окно
   els.sshOk.addEventListener('click', () => connectToSsh());
@@ -556,6 +604,47 @@ function setupEventListeners() {
     if (e.key === 'Escape') els.copyMoveCancel.click();
   });
   els.copyMoveModal.addEventListener('click', (e) => { if (e.target === els.copyMoveModal) hideCopyMoveModal(); });
+
+  // SSH Терминал обработчики
+  const sshTerminalModal = document.getElementById('ssh-terminal-modal');
+  const sshTerminalClose = document.getElementById('ssh-terminal-close');
+  const sshTerminalFullscreen = document.getElementById('ssh-terminal-fullscreen');
+  const sshTerminalInput = document.getElementById('ssh-terminal-input');
+  
+  if (sshTerminalClose) {
+    sshTerminalClose.addEventListener('click', () => {
+      sshTerminal.disconnect();
+      sshTerminalModal.style.display = 'none';
+    });
+  }
+  
+  if (sshTerminalFullscreen) {
+    sshTerminalFullscreen.addEventListener('click', () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        sshTerminalModal.requestFullscreen();
+      }
+    });
+  }
+  
+  if (sshTerminalInput) {
+    sshTerminalInput.addEventListener('keydown', async (e) => {
+      if (e.key === 'Enter') {
+        const cmd = sshTerminalInput.value;
+        sshTerminalInput.value = '';
+        await sshTerminal.sendCommand(cmd);
+      }
+    });
+  }
+  
+  if (sshTerminalModal) {
+    sshTerminalModal.addEventListener('click', (e) => {
+      if (e.target === sshTerminalModal) {
+        sshTerminalModal.style.display = 'none';
+      }
+    });
+  }
 
   // Клик по фону сбрасывает выделение
   document.addEventListener('click', () => {
